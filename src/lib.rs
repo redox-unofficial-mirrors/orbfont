@@ -23,19 +23,32 @@ use orbclient::{Color, Renderer};
 
 #[derive(Clone)]
 pub struct Font {
-    inner: rusttype::Font<'static>
+    inner: rusttype::Font<'static>,
 }
 
 impl Font {
     /// Find a font from an optional type, family, and style, such as "Mono", "Fira", "Regular"
     #[cfg(all(feature = "std", target_os = "redox"))]
-    pub fn find(typeface: Option<&str>, family: Option<&str>, style: Option<&str>) -> Result<Font, String> {
-        Font::from_path(&format!("/usr/share/fonts/{}/{}/{}.ttf", typeface.unwrap_or("Mono"), family.unwrap_or("Fira"), style.unwrap_or("Regular")))
+    pub fn find(
+        typeface: Option<&str>,
+        family: Option<&str>,
+        style: Option<&str>,
+    ) -> Result<Font, String> {
+        Font::from_path(&format!(
+            "/usr/share/fonts/{}/{}/{}.ttf",
+            typeface.unwrap_or("Mono"),
+            family.unwrap_or("Fira"),
+            style.unwrap_or("Regular")
+        ))
     }
 
     // A funciton to automate the process of building a font property  from "typeface, family, style"
     #[cfg(all(feature = "std", not(target_os = "redox")))]
-    fn build_fontproperty (typeface: Option<&str>, family: Option<&str>, style: Option<&str>) -> FontProperty {
+    fn build_fontproperty(
+        typeface: Option<&str>,
+        family: Option<&str>,
+        style: Option<&str>,
+    ) -> FontProperty {
         let mut font = FontPropertyBuilder::new();
         if let Some(style) = style {
             let style_caps = &style.to_uppercase();
@@ -76,7 +89,11 @@ impl Font {
     }
 
     #[cfg(all(feature = "std", not(target_os = "redox")))]
-    pub fn find(typeface: Option<&str>, family: Option<&str>, style: Option<&str>) -> Result<Font, String> {
+    pub fn find(
+        typeface: Option<&str>,
+        family: Option<&str>,
+        style: Option<&str>,
+    ) -> Result<Font, String> {
         // This funciton attempts to use the rust-font-loader library, a frontend
         // to the ubiquitous C library fontconfig, to find and load the specified
         // font.
@@ -85,7 +102,7 @@ impl Font {
         // and does not tag the result with associated data like "italic", merely returns
         // the name of the font if it exists.
         let fonts = system_fonts::query_specific(&mut font); // Returns an empty vector if there are no matches.
-        // Confirm that a font matched:
+                                                             // Confirm that a font matched:
         if !fonts.is_empty() {
             // get the matched font straight from the data:
             let font_data = system_fonts::get(&font); // Getting font data from properties
@@ -97,7 +114,7 @@ impl Font {
                         Err("error constructing a Font from bytes".to_string())
                     }
                 }
-                None => Err(format!("Could not get font {} from data", &fonts[0]))
+                None => Err(format!("Could not get font {} from data", &fonts[0])),
             }
         } else {
             // If no font matched, try again with no family, as concatenating "Sans" or "Serif" may rule out legitimate fonts
@@ -113,9 +130,9 @@ impl Font {
                             Err("error constructing a Font from bytes".to_string())
                         }
                     }
-                    None => Err(format!("Could not get font {} from data", &fonts[0]))
+                    None => Err(format!("Could not get font {} from data", &fonts[0])),
                 }
-            }  else {
+            } else {
                 // If no font matched, try to load the default font manually
                 Font::from_path("/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf")
             }
@@ -154,18 +171,23 @@ impl Font {
         let offset = rusttype::point(0.0, v_metrics.ascent);
 
         // Glyphs to draw for "RustType". Feel free to try other strings.
-        let glyphs: Vec<rusttype::PositionedGlyph> = self.inner.layout(text, scale, offset).collect();
+        let glyphs: Vec<rusttype::PositionedGlyph> =
+            self.inner.layout(text, scale, offset).collect();
 
         // Find the most visually pleasing width to display
-        let width = glyphs.iter().rev()
-            .find_map(|g| g.pixel_bounding_box()
-                        .map(|b| b.min.x as f32 + g.unpositioned().h_metrics().advance_width))
+        let width = glyphs
+            .iter()
+            .rev()
+            .find_map(|g| {
+                g.pixel_bounding_box()
+                    .map(|b| b.min.x as f32 + g.unpositioned().h_metrics().advance_width)
+            })
             .unwrap_or(0.0);
 
         Text {
             w: width.ceil() as u32,
             h: height.ceil() as u32,
-            glyphs
+            glyphs,
         }
     }
 }
@@ -173,7 +195,7 @@ impl Font {
 pub struct Text<'a> {
     w: u32,
     h: u32,
-    glyphs: Vec<rusttype::PositionedGlyph<'a>>
+    glyphs: Vec<rusttype::PositionedGlyph<'a>>,
 }
 
 impl<'a> Text<'a> {
@@ -188,19 +210,36 @@ impl<'a> Text<'a> {
     }
 
     /// Draw the text onto a window and clipp the text to the given bounds
-    pub fn draw_clipped<R: Renderer + ?Sized>(&self, renderer: &mut R, x: i32, y: i32, bounds_x: i32, bounds_width: u32, color: Color) {
+    pub fn draw_clipped<R: Renderer + ?Sized>(
+        &self,
+        renderer: &mut R,
+        x: i32,
+        y: i32,
+        bounds_x: i32,
+        bounds_width: u32,
+        color: Color,
+    ) {
         for g in &self.glyphs {
             if let Some(bb) = g.pixel_bounding_box() {
                 g.draw(|off_x, off_y, v| {
                     let off_x = off_x as i32 + bb.min.x;
                     let off_y = off_y as i32 + bb.min.y;
                     // There's still a possibility that the glyph clips the boundaries of the bitmap
-                    if off_x >= 0 && off_x < self.w as i32 && off_y >= 0 && off_y < self.h as i32
-                    && x + off_x >= bounds_x && x + off_x <= bounds_x + bounds_width as i32 {
+                    if off_x >= 0
+                        && off_x < self.w as i32
+                        && off_y >= 0
+                        && off_y < self.h as i32
+                        && x + off_x >= bounds_x
+                        && x + off_x <= bounds_x + bounds_width as i32
+                    {
                         let c = (v * 255.0) as u32;
-                        renderer.pixel(x + off_x, y + off_y, Color{
-                            data: c << 24 | (color.data & 0x00FF_FFFF)
-                        });
+                        renderer.pixel(
+                            x + off_x,
+                            y + off_y,
+                            Color {
+                                data: c << 24 | (color.data & 0x00FF_FFFF),
+                            },
+                        );
                     }
                 });
             }
@@ -209,6 +248,6 @@ impl<'a> Text<'a> {
 
     /// Draw the text onto a window
     pub fn draw<R: Renderer + ?Sized>(&self, renderer: &mut R, x: i32, y: i32, color: Color) {
-       self.draw_clipped(renderer, x, y, x, self.w, color);
+        self.draw_clipped(renderer, x, y, x, self.w, color);
     }
 }
