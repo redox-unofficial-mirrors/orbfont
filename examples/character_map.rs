@@ -9,7 +9,7 @@ use std::cmp::max;
 
 use std::env;
 
-use orbclient::{Color, Renderer, Window, WindowFlag, EventOption};
+use orbclient::{Color, EventOption, Renderer, Window, WindowFlag};
 use orbfont::Font;
 
 fn main() {
@@ -26,7 +26,7 @@ fn main() {
                 font.render("WXYZabcdefg", 64.0),
                 font.render("hijklmnopqr", 64.0),
                 font.render("stuvwxyz.?!", 64.0),
-                font.render("0123456789 ", 64.0)
+                font.render("0123456789 ", 64.0),
             ];
 
             let mut width = 0;
@@ -46,10 +46,15 @@ fn main() {
                 window.sync();
             };
 
-            let mut window = Window::new_flags(-1, -1, max(320, width), max(32, height),
-                                        &format!("{} - Character Map", title),
-                                        &[WindowFlag::Resizable])
-                                    .unwrap();
+            let mut window = Window::new_flags(
+                -1,
+                -1,
+                max(320, width),
+                max(32, height),
+                &format!("{} - Character Map", title),
+                &[WindowFlag::Resizable],
+            )
+            .unwrap();
 
             redraw(&mut window);
 
@@ -58,26 +63,21 @@ fn main() {
                     match event.to_option() {
                         EventOption::Resize(_) => redraw(&mut window),
                         EventOption::Quit(_) => return,
-                        _ => ()
+                        _ => (),
                     }
                 }
             }
-        },
+        }
         Err(err) => {
-            let mut window = Window::new(-1, -1, 320, 32, &format!("{} - Character Map", title))
-                                    .unwrap();
+            let mut window =
+                Window::new(-1, -1, 320, 32, &format!("{} - Character Map", err)).unwrap();
             window.set(Color::rgb(0, 0, 0));
-            let mut x = 0;
-            for c in format!("{}", err).chars() {
-                window.char(x, 0, c, Color::rgb(255, 255, 255));
-                x += 8;
-            }
             window.sync();
             loop {
                 for event in window.events() {
                     match event.to_option() {
                         EventOption::Quit(_) => return,
-                        _ => ()
+                        _ => (),
                     }
                 }
             }

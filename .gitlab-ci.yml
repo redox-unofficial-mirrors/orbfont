@@ -1,4 +1,9 @@
 
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master" && $CI_PROJECT_NAMESPACE == "redox-os"'
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
+
 build:linux:
   image: "rust:latest"
   before_script:
