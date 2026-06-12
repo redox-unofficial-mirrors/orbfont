@@ -28,9 +28,9 @@ pub struct Font {
 
 impl Font {
     /// Find a font from an optional type, family, and style, such as "Mono", "Fira", "Regular"
-    #[cfg(target_os = "redox")]
+    #[cfg(all(feature = "std", target_os = "redox"))]
     pub fn find(typeface: Option<&str>, family: Option<&str>, style: Option<&str>) -> Result<Font, String> {
-        Font::from_path(&format!("/ui/fonts/{}/{}/{}.ttf", typeface.unwrap_or("Mono"), family.unwrap_or("Fira"), style.unwrap_or("Regular")))
+        Font::from_path(&format!("/usr/share/fonts/{}/{}/{}.ttf", typeface.unwrap_or("Mono"), family.unwrap_or("Fira"), style.unwrap_or("Regular")))
     }
 
     // A funciton to automate the process of building a font property  from "typeface, family, style"
